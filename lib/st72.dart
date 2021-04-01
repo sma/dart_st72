@@ -862,11 +862,11 @@ class St72 {
   void codeTurtle() {
     final msg = message!;
     if (matchTokenFrom('go', msg)) {
-      throw UnimplementedError();
+      realPenFromInstanceDo(instance, (pen) => pen.go(fetch() as int));
     } else if (matchTokenFrom('turn', msg)) {
-      throw UnimplementedError();
+      realPenFromInstanceDo(instance, (pen) => pen.turn(fetch() as int));
     } else if (matchTokenFrom('goto', msg)) {
-      throw UnimplementedError();
+      realPenFromInstanceDo(instance, (pen) => pen.goto(fetch() as int, fetch() as int));
     }
   }
 
@@ -913,7 +913,33 @@ class St72 {
   // findTokenIndexOf: char in: str
   // nextAndFetch
   // realParagraphFrom: inst do: aBlock
-  // realPenFrom: inst do: aBlock
+  
+  void realPenFromInstanceDo(OOP instance, void Function(StPen) block) {
+    final inst = instance as StObject;
+    final pen = St72.pen ??= StPen();
+    final width = inst.ivars[2] as int;
+    pen.width = width;
+    final color = inst.ivars[1];
+    if (color is int) {
+      pen.color = StPenColor.values[color];
+    } else if (color is String) {
+      pen.color == StPenColor.values.singleWhere((c) => '$c'.endsWith(color));
+    } else {
+      throw 'invalid color';
+    }
+    pen.x = (inst.ivars[5] as int) - width ~/ 2;
+    pen.y = (inst.ivars[6] as int) - width ~/ 2;
+    pen.direction = inst.ivars[3] as int;
+    pen.isDown = inst.ivars[0] == 1;
+    pen.isReverse = inst.ivars[4] == 1;
+    block(pen);
+    inst.ivars[3] = pen.direction;
+    inst.ivars[5] = pen.x + width ~/ 2;
+    inst.ivars[6] = pen.y + width ~/ 2;
+  }
+
+  static StPen? pen;
+
   // scrollParagraph: para
 
   // this should and could be a table with 70 entries
@@ -1261,6 +1287,37 @@ void setClassTable(Object clss, StDictionary classTable) {
     clss.classTable = classTable;
   } else {
     throw 'missing class table for $clss';
+  }
+}
+
+enum StPenColor { black, white }
+
+class StPen {
+  int width = 256;
+  StPenColor color = StPenColor.black;
+  int x = 0;
+  int y = 0;
+  int direction = 0;
+  bool isDown = false;
+  bool isReverse = false;
+
+  void go(int steps) {
+    final a = direction * pi / 180;
+    goto(
+      x + (steps * cos(a)).round(), 
+      y + (steps * sin(a)).round(),
+    );
+  }
+
+  void turn(int angle) {
+    direction = (direction + angle) % 360;
+    print('@ turn to $direction°');
+  }
+
+  void goto(int xx, int yy) {
+    print('@ moves from $x,$y to $xx,$yy');
+    x = xx;
+    y = yy;
   }
 }
 
