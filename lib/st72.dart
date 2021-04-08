@@ -659,7 +659,7 @@ class St72 {
       }
     }
     if (matchTokenFrom('length', msg)) {
-      if (clss == Str) return returnValue((instance as Str).value.length);
+      if (clss == Str) return returnValue((instance as Str).length);
       return returnValue((instance as StVector).length);
     }
     if (matchTokenFrom('[', msg)) {
@@ -788,10 +788,9 @@ class St72 {
       if (s is Str) {
         final s2 = temps[5] as Str;
         final repSize = min(ub - lb, s2.length - lb2) + 1;
-        final ss = s.value.substring(0, lb + repSize - 2) + //
-            s2.value.substring(lb2 - 1) +
-            s.value.substring(lb + repSize - 1);
-        return returnValue(Str(ss));
+        return returnValue(s.substring(0, lb + repSize - 2) + //
+            s2.substring(lb2 - 1) +
+            s.substring(lb + repSize - 1));
       } else if (s is StVector) {
         final s2 = temps[5] as StVector;
         final repSize = min(ub - lb, s2.length - lb2) + 1;
@@ -801,9 +800,9 @@ class St72 {
     } else if (op == 6) {
       if (s is Str) {
         if (ub > s.length) {
-          return returnValue(Str(s.value.substring(lb - 1) + '?' * (ub - s.length)));
+          return returnValue(s.substring(lb - 1) + Str('?' * (ub - s.length)));
         }
-        return returnValue(Str(s.value.substring(lb - 1, ub - 1)));
+        return returnValue(s.substring(lb - 1, ub - 1));
       } else if (s is StVector) {
         if (ub > s.length) {
           final ss = s.sublist(lb - 1) + List<OOP>.filled(ub - s.length, null);
@@ -1217,26 +1216,49 @@ bool isClass(OOP object) => object is Type || object is StClass;
 
 /// Workaround because I use Dart's [String] for atoms (a.k.a. symbols).
 class Str {
-  Str(this.value);
+  Str(String s) : _elements = s.codeUnits;
 
-  /*final*/ String value;
+  Str._(this._elements);
 
-  int get length => value.length;
+  List<int> _elements;
 
-  int operator [](int index) => value.codeUnitAt(index);
+  int get length => _elements.length;
+
+  int operator [](int index) => _elements[index];
 
   operator []=(int index, int ch) {
-    value = value.substring(0, index) + String.fromCharCode(ch) + value.substring(index + 1);
+    try {
+      _elements[index] = ch;
+    } on UnsupportedError catch (_) {
+      _elements = _elements.toList();
+      _elements[index] = ch;
+    }
   }
 
-  @override
-  bool operator ==(dynamic other) => other is Str && other.value == value;
+  Str operator +(Str other) => Str._(_elements + other._elements);
+
+  Str substring(int start, [int? end]) => Str._(_elements.sublist(start, end));
+
+  String get string => String.fromCharCodes(_elements);
 
   @override
-  int get hashCode => value.hashCode;
+  bool operator ==(dynamic other) => other is Str && _compare(this, other) == 0;
 
   @override
-  String toString() => value;
+  int get hashCode => string.hashCode;
+
+  @override
+  String toString() => '"$string"';
+
+  static int _compare(Str a, Str b) {
+    final length = a.length;
+    if (length != b.length) return length - b.length;
+    for (var i = 0; i < length; i++) {
+      final ca = a[i], cb = b[i];
+      if (ca != cb) return ca - cb;
+    }
+    return 0;
+  }
 }
 
 // method dictionaries for built-in classes, see [getClassTable]
