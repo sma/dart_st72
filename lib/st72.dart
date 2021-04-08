@@ -12,15 +12,12 @@ typedef StDictionary = Map<String, OOP>;
 /// Smalltalk's `nil` so that we don't have to use `null`.
 const OOP nil = null;
 
-/// Evaluation mode, see [St72].
+/// Evaluation mode, see [St72.mode].
 enum Mode { eval, ret, apply, repeat }
 
 // some constants for special atom not representable in ASCII
 const OpenColon = '\u2982';
 const Posessive = '\u275C';
-
-// this is a class var of [St72]
-final TopLev = <String, OOP>{};
 
 // a.k.a. `ST72Context`
 class St72 {
@@ -33,7 +30,7 @@ class St72 {
     required this.temps,
     required this.code,
     required this.subEval,
-  })   : pc = 0,
+  })  : pc = 0,
         mode = Mode.eval;
 
   OOP instance;
@@ -48,13 +45,14 @@ class St72 {
   OOP value;
   final bool subEval;
 
+  static final TopLev = <String, OOP>{};
+
   // ---- printing ----
 
   @override
   String toString() {
     return '$clss ${'$mode'.substring(5)}: ${[
-      for (var i = 0; i < code.length; i++)
-        '${i == pc - 1 ? '→' : ''}${code[i] is List ? '(...)' : '${code[i]}'}',
+      for (var i = 0; i < code.length; i++) '${i == pc - 1 ? '→' : ''}${code[i] is List ? '(...)' : '${code[i]}'}',
     ].join(' ')}';
   }
 
@@ -790,7 +788,9 @@ class St72 {
       if (s is Str) {
         final s2 = temps[5] as Str;
         final repSize = min(ub - lb, s2.length - lb2) + 1;
-        final ss = s.value.substring(0, lb + repSize - 2) + s2.value.substring(lb2 - 1) + s.value.substring(lb + repSize - 1);
+        final ss = s.value.substring(0, lb + repSize - 2) + //
+            s2.value.substring(lb2 - 1) +
+            s.value.substring(lb + repSize - 1);
         return returnValue(Str(ss));
       } else if (s is StVector) {
         final s2 = temps[5] as StVector;
@@ -913,7 +913,7 @@ class St72 {
   // findTokenIndexOf: char in: str
   // nextAndFetch
   // realParagraphFrom: inst do: aBlock
-  
+
   void realPenFromInstanceDo(OOP instance, void Function(StPen) block) {
     final inst = instance as StObject;
     final pen = St72.pen ??= StPen();
@@ -1159,10 +1159,10 @@ You can edit a function or class by typing, eg,
   }
 }
 
-// Access type, see [St72Accessor].
+/// Access type, see [St72Accessor.type].
 enum St72AccessorType { temp, ivar }
 
-// A way to access either temporaries aka parameters or instance variables
+/// A way to access either temporaries/parameters or instance variables.
 class St72Accessor {
   const St72Accessor(this.type, this.index);
 
@@ -1304,7 +1304,7 @@ class StPen {
   void go(int steps) {
     final a = direction * pi / 180;
     goto(
-      x + (steps * cos(a)).round(), 
+      x + (steps * cos(a)).round(),
       y + (steps * sin(a)).round(),
     );
   }
@@ -1326,7 +1326,8 @@ class StPen {
 /// Splits [s] into atoms, numbers, strings, and vectors or such elements.
 StVector scan(String s) {
   final stack = <StVector>[<OOP>[]];
-  final re = RegExp("'(.*?)'|(-?\\d+(?:\\.\\d+)?)|([a-zA-Z][a-zA-Z0-9]*|[.\"_%:!#?~\\[\\]=><\\-+*/&{},@\$;\u2982\u275C])|[()]|([^\t\r\n ])",
+  final re = RegExp(
+      "'(.*?)'|(-?\\d+(?:\\.\\d+)?)|([a-zA-Z][a-zA-Z0-9]*|[.\"_%:!#?~\\[\\]=><\\-+*/&{},@\$;\u2982\u275C])|[()]|([^\t\r\n ])",
       dotAll: true);
   for (final m in re.allMatches(s)) {
     if (m[1] != null) {
