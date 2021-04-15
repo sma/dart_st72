@@ -10,7 +10,7 @@ This is the result.
 ## Quickstart
 
     dart pub get
-    dart --enable-experiment=nonfunction-type-aliases run
+    dart run
 
 ### Running the Code
 

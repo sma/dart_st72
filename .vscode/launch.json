@@ -5,10 +5,7 @@
             "name": "Dart",
             "program": "bin/st72.dart",
             "request": "launch",
-            "type": "dart",
-            "vmAdditionalArgs": [
-                "--enable-experiment=nonfunction-type-aliases"
-            ]
+            "type": "dart"
         }
     ]
 }
