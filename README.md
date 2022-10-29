@@ -12,13 +12,15 @@ This is the result.
     dart pub get
     dart run
 
+This prints a bunch of log messages while trying to run the code, eventually simulating turtle graphics. Search for `7` and `3.14159292` which is the result of the first code run after bootstrapping.
+
 ### Running the Code
 
-Import `lib/st72.dart`.
+1. Import `lib/st72.dart`.
 
-Then call `St72.bootFrom(source)` to bootstrap the system. `source` should be the contents of the `ALLDEFS` file that contains all the Smalltalk-72 source code. I took the liberty to include it here. I hope, nobody objects.
+2. Call `St72.bootFrom(source)` to bootstrap the system. `source` should be the contents of the `ALLDEFS` file that contains all the Smalltalk-72 source code. I took the liberty to include it here. I hope, nobody objects.
 
-Then run `St72.runAsUserText('3+4')` to execute the canonical smoke test. This should print 7 and is the only thing I tried so far. However, I know that why Dan and others always said that this simple looking expression did exercise most of the system.
+3. Run `St72.runAsUserText('3+4')` to execute the canonical smoke test. This should print `7` and is nearly the only thing I tried so far. However, I happen to know that Dan and others always said that this simple looking expression exercises most of the system.
 
 ### Modifications
 
@@ -34,11 +36,11 @@ BTW, I noticed that the Smalltalk simulator expects `<=` or `>=` for comparison 
 
 ### Implementation Details
 
-The original system was embedded into Squeak (which is a dialect of Smalltalk-80) and shared some code: Most if not all builtin types and of course the graphics subsystem.
+The original system was embedded into [Squeak](https://squeak.org/) (which is a dialect of Smalltalk-80 recreated by Alan Kay and Dan Ingalls) and shared some code: Most if not all built-in types and of course the graphics subsystem.
 
-Like with the Squeak host, I tried to reuse builtin Dart types.
+Like with the Squeak host, I tried to reuse built-in Dart types.
 
-I use Dart `int`, `double`, `bool`, and `List` to represent Smalltalk integer objects, floating point objects, the `false` object, and vectors of objects. I use Dart `String` as type for atom a.k.a. symbols. Then, I added an ad-hoc `Str` class that represents Smalltalk strings, which are mutable – a fact I didn't know but which I forgot over the years. I'm not sure whether mapping `nil` to Dart's `null` was a good idea. Last but not least, I added `StClass` to represent Smalltalk(-80) classes and `StObject` to represent instances of those classes. There's no meta shenanigan, though.
+I use Dart `int`, `double`, `bool`, and `List` to represent Smalltalk integer objects, floating point objects, the `false` object, and vectors of objects. I use Dart `String` as type for atoms a.k.a. symbols. Then, I added an ad-hoc `Str` class that represents Smalltalk strings, which are mutable – a fact I once did know but which I forgot over the years. I'm not sure whether mapping `nil` to Dart's `null` was a good idea. Last but not least, I added `StClass` to represent Smalltalk(-80) classes and `StObject` to represent instances of those classes. There's no meta shenanigan, though.
 
     Smalltalk-72 class      Dart equivalent
     ------------------      ---------------
@@ -52,15 +54,13 @@ I use Dart `int`, `double`, `bool`, and `List` to represent Smalltalk integer ob
     class                   StClass
     instance                StObject
 
-By using Dart's `typedef`, I called "pointers" to objects `OOP` (aliased as `Object?`) and Arrays of such "pointers" `StVector` (aliases as `List<Object?>`).
+By using Dart's `typedef`, I named "pointers" to objects `OOP` (aliased as `Object?`) and Arrays of such "pointers" `StVector` (aliased as `List<Object?>`).
 
-Please note that you cannot use `StVector.filled()` – at least on the Dart 2.13 beta I'm currently using! This creates `List<Null>` objects instead of `List<Object?>`. Somebody should file a bug report, I guess.
-
-I added my own `scan` function to split a string of source code into tokens and my own class `InputStream` to access a Dart string like a Smalltalk stream. For the Transcript, I use a Dart `StringSink`.
+I added my own `scan` function to split a string of source code into tokens using _regular expression magic_ and my own class `InputStream` to access a Dart string like a Smalltalk stream. For the Transcript, I use a Dart `StringSink`.
 
 The original code had a `ST72Object` root class that has class methods `classTable` and `classTable:` (backed by class instance variable `table`) so that all user-defined Smalltalk-72 objects, which are instances of _uninterned_ `ST72Thing` classes (that are then renamed to a Smalltalk-72 name), which are in turn subclasses of `ST72Object`, all have such a getter to access the Smalltalk-72 method dictionary. Then, system classes where extended to also have such a getter. I make my own implementation using `StClass` and `StObject` here and added some helper functions.
 
-I tried to convert Smalltalk's 1-based subscripts to 0-based subscripts and hopefully, didn't introduce off-by-one errors. If something doesn't work, this might be a source of difficult to find bugs.
+I tried to convert Smalltalk's 1-based subscripts to 0-based subscripts and hopefully, didn't introduce off-by-one errors. If something doesn't work, this might be a source of difficult-to-find bugs.
 
 ### Primitives
 
@@ -101,7 +101,7 @@ Names in parentheses aren't implemented in the Squeak simulator. Some of them ar
     51 textframe        missing, requires UI
     52 dclearetc        missing
 
-`done` means that the primitive is implemented in Dart. `missing` means, it is not implemented yet. Some primitives are implemented only `partially`. `requires UI` means that this needs, well, some graphical UI and makes no sense with just a command line. I could imagine a Flutter implemention or a stand-alone version based on SDL. That should also use the old font file.
+`done` means that the primitive is implemented in Dart. `missing` means, it is not implemented yet. Some primitives are implemented only `partially`. `requires UI` means that this needs, well, some graphical UI and makes no sense with just a command line. I could imagine a Flutter implemention or a stand-alone version based on SDL. That should also use the old font file for additional flavor.
 
 ## Links and References
 

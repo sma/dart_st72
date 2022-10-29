@@ -16,8 +16,8 @@ const OOP nil = null;
 enum Mode { eval, ret, apply, repeat }
 
 // some constants for special atom not representable in ASCII
-const OpenColon = '\u2982';
-const Posessive = '\u275C';
+const openColon = '\u2982';
+const posessive = '\u275C';
 
 // a.k.a. `ST72Context`
 class St72 {
@@ -45,7 +45,7 @@ class St72 {
   OOP value;
   final bool subEval;
 
-  static final TopLev = <String, OOP>{};
+  static final topLev = <String, OOP>{};
 
   // ---- printing ----
 
@@ -143,7 +143,7 @@ class St72 {
       returnValueTo(fetchFrom(this), message!);
     } else if (token == '"') {
       applyValue(nextToken());
-    } else if (token == OpenColon) {
+    } else if (token == openColon) {
       applyValue(message!.nextToken());
     } else if (token == '#') {
       value = valueAt(nextToken() as String);
@@ -211,7 +211,7 @@ class St72 {
       ret: this,
       message: this,
       global: this,
-      temps: List<OOP>.filled(getClassTable(clss)['ARSIZE'] as int, null),
+      temps: StVector.filled(getClassTable(clss)['ARSIZE'] as int, null),
       code: getClassTable(clss)['DO'] as StVector,
       subEval: false,
     ).evaluate();
@@ -246,7 +246,7 @@ class St72 {
     return context.evalOnce();
   }
 
-  OOP fetchFromMsgInContext(St72 msg, St72 glob) {
+  void fetchFromMsgInContext(St72 msg, St72 glob) {
     final token = peekToken();
     if (token == '"') {
       nextToken();
@@ -315,7 +315,7 @@ class St72 {
   /// Tolerates code written in no context, defaulting to the top-level dictionary.
   OOP bootValueAt(String token) {
     if (clss == null) {
-      return TopLev[token];
+      return topLev[token];
     }
     return valueAt(token);
   }
@@ -323,7 +323,7 @@ class St72 {
   /// Tolerates code written in no context, defaulting to the top-level dictionary.
   void bootValueAtPut(String token, OOP value) {
     if (clss == null) {
-      TopLev[token] = value;
+      topLev[token] = value;
       return;
     }
     valueAtPut(token, value);
@@ -405,7 +405,7 @@ class St72 {
       ret: this,
       message: msg.message,
       global: message,
-      temps: List<OOP>.filled(getClassTable(clss)['ARSIZE'] as int, null),
+      temps: StVector.filled(getClassTable(clss)['ARSIZE'] as int, null),
       code: getClassTable(clss)['DO'] as StVector,
       subEval: false,
     ).evaluate());
@@ -640,7 +640,7 @@ class St72 {
       if (clss == Str) {
         return returnValue(Str('?' * length));
       }
-      return returnValue(List<OOP>.filled(length, 3));
+      return returnValue(StVector.filled(length, 3));
     }
     if (clss == List) {
       final v = instance as StVector;
@@ -805,7 +805,7 @@ class St72 {
         return returnValue(s.substring(lb - 1, ub - 1));
       } else if (s is StVector) {
         if (ub > s.length) {
-          final ss = s.sublist(lb - 1) + List<OOP>.filled(ub - s.length, null);
+          final ss = s.sublist(lb - 1) + StVector.filled(ub - s.length, null);
           return returnValue(ss);
         }
         return returnValue(s.sublist(lb - 1, ub - 1));
@@ -1007,7 +1007,7 @@ class St72 {
       'falseclass': bool,
     };
     final clss = mapping[title] ?? global!.bootValueAt(title) ?? StClass(title, ivars);
-    final dict = title == 'USER' ? TopLev : <String, OOP>{};
+    final dict = title == 'USER' ? topLev : <String, OOP>{};
     setClassTable(clss, dict);
 
     dict['TABLE'] = dict;
@@ -1018,6 +1018,7 @@ class St72 {
       dict[ivars[i]] = St72Accessor(St72AccessorType.ivar, i);
     }
     for (var i = 0; i < cvars.length; i++) {
+      // ignore: unnecessary_null_aware_assignments
       dict[cvars[i]] ??= null;
     }
     dict['TITLE'] = title;
@@ -1044,13 +1045,13 @@ class St72 {
     _classTableForNumber.clear();
     _classTableForString.clear();
 
-    TopLev.clear();
+    topLev.clear();
 
     inputStream = InputStream(contents);
     transcript = sink;
 
     while (!inputStream.atEnd) {
-      final user = TopLev['USER'];
+      final user = topLev['USER'];
       if (user != null) {
         transcript.writeln(runAsUserCode(getClassTable(user)['DO'] as StVector));
       } else {
@@ -1082,14 +1083,14 @@ You can edit a function or class by typing, eg,
 
   /// Set up context for evaluating at top level.
   static OOP runAsUserCode(StVector vec) {
-    final user = TopLev['USER'];
+    final user = topLev['USER'];
     return St72(
       instance: null,
       clss: user,
       ret: null,
       message: null,
       global: null,
-      temps: List<OOP>.filled(getClassTable(user)['ARSIZE'] as int, null),
+      temps: StVector.filled(getClassTable(user)['ARSIZE'] as int, null),
       code: vec,
       subEval: false,
     ).evaluate();
@@ -1201,7 +1202,7 @@ class StClass {
   StDictionary classTable = {};
 
   StObject create() {
-    return StObject(this, List<OOP>.filled(ivars.length, null));
+    return StObject(this, StVector.filled(ivars.length, null));
   }
 
   @override
