@@ -1227,7 +1227,7 @@ class Str {
 
   int operator [](int index) => _elements[index];
 
-  operator []=(int index, int ch) {
+  void operator []=(int index, int ch) {
     try {
       _elements[index] = ch;
     } on UnsupportedError catch (_) {
