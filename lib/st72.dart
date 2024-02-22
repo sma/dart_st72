@@ -1243,7 +1243,7 @@ class Str {
   String get string => String.fromCharCodes(_elements);
 
   @override
-  bool operator ==(dynamic other) => other is Str && _compare(this, other) == 0;
+  bool operator ==(Object other) => other is Str && _compare(this, other) == 0;
 
   @override
   int get hashCode => string.hashCode;
